@@ -75,11 +75,11 @@ func TestMain(root string) {
 			log.Fatal(err)
 		}
 		for _, file := range(files) {
-			TestParser, err := parser.GetParser(file.Name())
+			TestParser, err := parser.GetParser(filepath.Join(reqDir, file.Name()))
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(TestParser.Alg())
+
 		}
 	}
 }

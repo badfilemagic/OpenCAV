@@ -29,7 +29,7 @@ func GetParser(filename string) (Parser, error) {
 		err error
 		alg string
 	)
-	if match, err = regexp.Match(`SHA`, []byte(filename)); err == nil && match {
+	if match, err = regexp.Match(`SHA\\`, []byte(filename)); err == nil && match {
 		if match, err = regexp.Match(`256`, []byte(filename)); err == nil && match {
 			alg = "SHA256"
 		} else if match, err := regexp.Match(`512`, []byte(filename)); err == nil && match {
@@ -42,6 +42,7 @@ func GetParser(filename string) (Parser, error) {
 			rpm := new(ReqParserSha2Monte)
 			rpm.SetFilename(filename)
 			rpm.SetAlg(alg)
+			rpm.SetMonte(true)
 			return rpm, nil
 		} else {
 			rp := new(ReqParserSha2)
