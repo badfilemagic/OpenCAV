@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-type ReqParserSha2Monte struct {
+type ReqParserShaMonte struct {
 	filename 	string
 	alg			string
 	ismonte		bool
@@ -21,50 +21,50 @@ type ReqParserSha2Monte struct {
 	digests		[][]byte
 }
 
-func NewReqParserSha2Monte() ReqParserSha2Monte {
-	return ReqParserSha2Monte{}
+func NewReqParserShaMonte() ReqParserShaMonte {
+	return ReqParserShaMonte{}
 }
 
 
-func (r *ReqParserSha2Monte) SetFilename(filename string) {
+func (r *ReqParserShaMonte) SetFilename(filename string) {
 	r.filename = filename
 }
-func (r *ReqParserSha2Monte) Alg() string {
+func (r *ReqParserShaMonte) Alg() string {
 	return r.alg
 }
-func (r *ReqParserSha2Monte) SetAlg(alg string) {
+func (r *ReqParserShaMonte) SetAlg(alg string) {
 	r.alg = alg
 }
 
-func (r *ReqParserSha2Monte) Filename() string {
+func (r *ReqParserShaMonte) Filename() string {
 	return r.filename
 }
 
-func (r *ReqParserSha2Monte) SetMonte(m bool) {
+func (r *ReqParserShaMonte) SetMonte(m bool) {
 	r.ismonte = m
 }
 
-func (r *ReqParserSha2Monte) Monte() bool {
+func (r *ReqParserShaMonte) Monte() bool {
 	return r.ismonte
 }
 
-func (r *ReqParserSha2Monte) SetOplen(l int) {
+func (r *ReqParserShaMonte) SetOplen(l int) {
 	r.digestlen = l
 }
-func (r *ReqParserSha2Monte) Oplen() int {
+func (r *ReqParserShaMonte) Oplen() int {
 	return r.digestlen
 }
 
-func (r *ReqParserSha2Monte) Seed() []byte {
+func (r *ReqParserShaMonte) Seed() []byte {
 	return r.seed
 }
 
 
-func (r *ReqParserSha2Monte) Operations() [][]byte {
+func (r *ReqParserShaMonte) Operations() [][]byte {
 	return r.digests
 }
 
-func (r *ReqParserSha2Monte) Ingest(lines []string) (int, error) {
+func (r *ReqParserShaMonte) Ingest(lines []string) (int, error) {
 	for i := 0; i < len(lines)-1; i++ {
 		if match, err := regexp.Match(`^#`, []byte(lines[i])); err == nil && match {
 			r.respheader = append(r.respheader, lines[i])
@@ -73,10 +73,14 @@ func (r *ReqParserSha2Monte) Ingest(lines []string) (int, error) {
 				r.SetOplen(32)
 			} else if match, err := regexp.Match(`64`, []byte(lines[i])); err == nil && match {
 				r.SetOplen(64)
+			} else if strings.Contains(lines[i], "256") {
+				r.SetOplen(256)
+			} else if strings.Contains(lines[i], "512") {
+				r.SetOplen(512)
 			} else {
 				log.Fatal(errors.New("Unknown Digest Length!" + lines[i]))
 			}
-		} else if lines[i] == "" && lines[i+1] != "[L = 32]" && lines[i+1] != "[L = 64]" {
+		} else if lines[i] == "" && lines[i+1] != "[L = 32]" && lines[i+1] != "[L = 64]"  && lines[i+1] != "[L = 256]" && lines[i+1] != "[L = 512]" {
 		} else if match, err := regexp.Match("Seed = ", []byte(lines[i])); err == nil && match {
 			if r.seed, err = hex.DecodeString(strings.Split(lines[i], " = ")[1]); err != nil {
 				return 0, err
@@ -86,12 +90,12 @@ func (r *ReqParserSha2Monte) Ingest(lines []string) (int, error) {
 	return 1, nil
 }
 
-func (r *ReqParserSha2Monte) RunTest(doMonte algs.DoHashMonte) {
+func (r *ReqParserShaMonte) RunTest(doMonte algs.DoHashMonte) {
 	r.digests = doMonte(r.Seed(), r.Alg())
 }
 
 
-func (r *ReqParserSha2Monte) WriteResponse(filename string) error {
+func (r *ReqParserShaMonte) WriteResponse(filename string) error {
 	fh, err := os.Create(filename)
 	if err != nil {
 		return err

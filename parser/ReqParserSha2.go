@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type ReqParserSha2 struct {
+type ReqParserSha struct {
 	filename 	string
 	alg 		string
 	ismonte		bool
@@ -17,40 +17,40 @@ type ReqParserSha2 struct {
 	operations	[]algs.Sha2
 }
 
-func NewReqParserSha2() ReqParserSha2 {
-	return ReqParserSha2{}
+func NewReqParserSha() ReqParserSha {
+	return ReqParserSha{}
 }
 
-func (r *ReqParserSha2) SetFilename(filename string) {
+func (r *ReqParserSha) SetFilename(filename string) {
 	r.filename = filename
 }
-func (r *ReqParserSha2) Alg() string {
+func (r *ReqParserSha) Alg() string {
 	return r.alg
 }
-func (r *ReqParserSha2) SetAlg(alg string) {
+func (r *ReqParserSha) SetAlg(alg string) {
 	r.alg = alg
 }
 
-func (r *ReqParserSha2) Filename() string {
+func (r *ReqParserSha) Filename() string {
 	return r.filename
 }
 
-func (r *ReqParserSha2) SetMonte(m bool) {
+func (r *ReqParserSha) SetMonte(m bool) {
 	r.ismonte = m
 }
 
-func (r *ReqParserSha2) Monte() bool {
+func (r *ReqParserSha) Monte() bool {
 	return r.ismonte
 }
 
-func (r *ReqParserSha2) SetOplen(l int) {
+func (r *ReqParserSha) SetOplen(l int) {
 	r.digestlen = l
 }
-func (r *ReqParserSha2) Oplen() int {
+func (r *ReqParserSha) Oplen() int {
 	return r.digestlen
 }
 
-func (r *ReqParserSha2) Ingest(lines []string) (int, error) {
+func (r *ReqParserSha) Ingest(lines []string) (int, error) {
 	for i := 0; i < len(lines)-1; i++ {
 		if match, err := regexp.Match(`^#`, []byte(lines[i])); err == nil && match {
 			r.respheader = append(r.respheader, lines[i])
@@ -58,7 +58,11 @@ func (r *ReqParserSha2) Ingest(lines []string) (int, error) {
 			r.SetOplen(32)
 		} else if lines[i] == "[L = 64]" {
 			r.SetOplen(64)
-		} else if lines[i] == "" && lines[i+1] != "[L = 32]" && lines[i+1] != "[L = 64]" {
+		} else if lines[i] == "[L = 256]" {
+			r.SetOplen(256)
+		} else if lines[i] == "[L = 512]" {
+			r.SetOplen(512)
+		} else if lines[i] == "" && lines[i+1] != "[L = 32]" && lines[i+1] != "[L = 64]"  && lines[i+1] != "[L = 256]" && lines[i+1] != "[ L = 512]"{
 			op := algs.Sha2{}
 			op.MsgLen = strings.Split(lines[i+1], " = ")[1]
 			if op.MsgLen == "0" {
@@ -79,13 +83,13 @@ func (r *ReqParserSha2) Ingest(lines []string) (int, error) {
 	return len(r.operations), nil
 }
 
-func (r *ReqParserSha2) RunTest(doHash algs.DoHash) {
+func (r *ReqParserSha) RunTest(doHash algs.DoHash) {
 	for i := 0 ; i < len(r.operations); i++ {
 		r.operations[i].Digest = doHash(r.operations[i].Msg, r.Alg())
 	}
 }
 
-func (r *ReqParserSha2) WriteResponse(filename string) error {
+func (r *ReqParserSha) WriteResponse(filename string) error {
 	fh, err := os.Create(filename)
 	if err != nil {
 		return err
