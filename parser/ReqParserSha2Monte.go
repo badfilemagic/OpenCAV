@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"OpenCAV/algs"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -20,8 +21,8 @@ type ReqParserSha2Monte struct {
 	digests		[][]byte
 }
 
-func NewReqParserSha2Monte(filename string) ReqParserSha2Monte {
-	return ReqParserSha2Monte{filename:filename}
+func NewReqParserSha2Monte() ReqParserSha2Monte {
+	return ReqParserSha2Monte{}
 }
 
 
@@ -59,6 +60,10 @@ func (r *ReqParserSha2Monte) Seed() []byte {
 }
 
 
+func (r *ReqParserSha2Monte) Operations() [][]byte {
+	return r.digests
+}
+
 func (r *ReqParserSha2Monte) Ingest(lines []string) (int, error) {
 	for i := 0; i < len(lines)-1; i++ {
 		if match, err := regexp.Match(`^#`, []byte(lines[i])); err == nil && match {
@@ -81,6 +86,11 @@ func (r *ReqParserSha2Monte) Ingest(lines []string) (int, error) {
 	return 1, nil
 }
 
+func (r *ReqParserSha2Monte) RunTest(doMonte algs.DoHashMonte) {
+	r.digests = doMonte(r.Seed(), r.Alg())
+}
+
+
 func (r *ReqParserSha2Monte) WriteResponse(filename string) error {
 	fh, err := os.Create(filename)
 	if err != nil {
@@ -90,15 +100,15 @@ func (r *ReqParserSha2Monte) WriteResponse(filename string) error {
 
 	for _, line := range r.respheader {
 		line += "\r\n"
-		fh.Write([]byte(line))
+		_,_ = fh.Write([]byte(line))
 	}
-	fh.Write([]byte("\r\n"))
+	_,_ = fh.Write([]byte("\r\n"))
 	for i, op := range r.digests {
 		line1 := fmt.Sprintf("COUNT = %d\r\n",i)
 		line2 := "MD = " + hex.EncodeToString(op) + "\r\n"
-		fh.Write([]byte(line1))
-		fh.Write([]byte(line2))
-		fh.Write([]byte("\r\n"))
+		_,_ = fh.Write([]byte(line1))
+		_,_ = fh.Write([]byte(line2))
+		_,_ = fh.Write([]byte("\r\n"))
 	}
 	return nil
 }

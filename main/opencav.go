@@ -1,57 +1,86 @@
 package main
 
 import (
+	"OpenCAV/parser"
+	"errors"
+	"flag"
+	"fmt"
+	"regexp"
 	"OpenCAV/shims/gocrypto"
+	"io/ioutil"
+	"log"
+	"path/filepath"
+	"strings"
 )
 
-
-const (
-	Sha2MonteIterations = 100
+var (
+	root string
 )
 
-/*
-func Hash256(data []byte) []byte {
-	h := sha256.New()
-	h.Write(data)
-	return h.Sum(nil)
-}
-
-
-func Sha2Monte(len int, seed []byte) [][]byte {
-	var checkpoints [][]byte
-	var Mx []byte
-	MD0 := seed
-	MD1 := seed
-	MD2 := seed
-	for i := 0; i < Sha2MonteIterations; i++ {
-		for j := 0; j < 1000; j++ {
-			h := sha256.New()
-			h.Write(MD0)
-			h.Write(MD1)
-			h.Write(MD2)
-			Mx = MD0
-			MD0 = MD1
-			MD1 = MD2
-			MD2 = Mx
-			//h.Write(MD2)
-			MD2 = h.Sum(nil)
+func DoShaTesting(vectors []string) {
+	for _, vec := range(vectors) {
+		if strings.Contains(vec, "Monte") {
+			TestParser := parser.ReqParserSha2Monte{}
+			if strings.Contains(vec, "256") {
+				TestParser.SetAlg("SHA256")
+			} else if strings.Contains(vec, "512") {
+				TestParser.SetAlg("SHA512")
+			}
+			fname := filepath.Join(root, "SHA", "req", vec)
+			vectors, err := parser.LoadReqFile(fname)
+			if err != nil {
+				log.Fatal(err)
+			} else {
+				TestParser.Ingest(vectors)
+				TestParser.RunTest(gocrypto.TestSha2Monte)
+				re := regexp.MustCompile(`(req)`)
+				outFile := re.ReplaceAllString(vec, `rsp`)
+				TestParser.WriteResponse(filepath.Join(root, "SHA", "resp", outFile))
+			}
+		} else {
+			TestParser := parser.ReqParserSha2{}
+			if strings.Contains(vec, "256") {
+				TestParser.SetAlg("SHA256")
+			} else if strings.Contains(vec, "512") {
+				TestParser.SetAlg("SHA512")
+			}
+			fname := filepath.Join(root, "SHA", "req", vec)
+			vectors, err := parser.LoadReqFile(fname)
+			if err != nil {
+				log.Fatal(errors.New("Failed to load request file"))
+			} else {
+				_, err = TestParser.Ingest(vectors)
+				if err != nil {
+					log.Fatal(errors.New("Died ingesting vectors"))
+				}
+				TestParser.RunTest(gocrypto.TestSha2)
+				re := regexp.MustCompile(`(req)`)
+				outFile := re.ReplaceAllString(vec, `rsp`)
+				TestParser.WriteResponse(filepath.Join(root, "SHA", "resp", outFile))
+			}
 		}
-		//fmt.Println(hex.EncodeToString(checkpoint))
-		checkpoints = append (checkpoints, MD2)
-		fmt.Println(hex.EncodeToString(MD2))
-		MD0 = MD2
-		MD1 = MD2
 	}
-	return checkpoints
 }
-
-*/
-
 
 func main() {
-	root := "C:\\Users\\Dean Freeman\\Desktop\\CAVS21.3\\Products\\MyTestIUT\\"
-
-	gocrypto.TestMain(root)
-
+	flag.StringVar(&root, "root", "", "Root directory containng the test vectors")
+	flag.Parse()
+	if root == "" {
+		log.Fatal("Must supply a root directory")
+	}
+	for _, alg := range gocrypto.ImplementedAlgs {
+		reqDir := filepath.Join(root, alg, "req")
+		fmt.Println(reqDir)
+		reqFiles, err := ioutil.ReadDir(reqDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fnames := []string{}
+		for _, file := range reqFiles {
+			fnames = append(fnames, file.Name())
+		}
+		if strings.Contains(alg, "SHA") && !strings.Contains(alg, "SHA3") {
+			DoShaTesting(fnames)
+		}
+	}
 }
-

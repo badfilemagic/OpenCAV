@@ -7,6 +7,7 @@ type Parser interface {
 	SetAlg(alg string)
 	SetMonte(bool)
 	Monte() bool
+	RunTest(func())
 	Ingest(lines []string) (int, error)
 	WriteResponse(filename string) error
 }
