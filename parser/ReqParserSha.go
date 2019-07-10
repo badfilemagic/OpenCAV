@@ -14,7 +14,7 @@ type ReqParserSha struct {
 	ismonte		bool
 	respheader 	[]string
 	digestlen 	int
-	operations	[]algs.Sha2
+	operations	[]algs.Sha
 }
 
 func NewReqParserSha() ReqParserSha {
@@ -56,14 +56,19 @@ func (r *ReqParserSha) Ingest(lines []string) (int, error) {
 			r.respheader = append(r.respheader, lines[i])
 		} else if lines[i] == "[L = 32]" {
 			r.SetOplen(32)
+			r.SetAlg("SHA256")
 		} else if lines[i] == "[L = 64]" {
 			r.SetOplen(64)
+			r.SetAlg("SHA512")
 		} else if lines[i] == "[L = 256]" {
 			r.SetOplen(256)
+			r.SetAlg("SHA3_256")
 		} else if lines[i] == "[L = 512]" {
 			r.SetOplen(512)
-		} else if lines[i] == "" && lines[i+1] != "[L = 32]" && lines[i+1] != "[L = 64]"  && lines[i+1] != "[L = 256]" && lines[i+1] != "[ L = 512]"{
-			op := algs.Sha2{}
+			r.SetAlg("SHA3_512")
+		} else if lines[i] == "" && lines[i+1] != "[L = 32]" && lines[i+1] != "[L = 64]" &&
+									lines[i+1] != "[L = 256]" && lines[i+1] != "[L = 512]" {
+			op := algs.Sha{}
 			op.MsgLen = strings.Split(lines[i+1], " = ")[1]
 			if op.MsgLen == "0" {
 				op.Msg, _ = hex.DecodeString("")

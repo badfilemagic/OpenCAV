@@ -4,7 +4,6 @@ import (
 	"OpenCAV/TestRunners"
 	"OpenCAV/shims/gocrypto"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -24,7 +23,6 @@ func main() {
 	}
 	for _, alg := range gocrypto.ImplementedAlgs {
 		reqDir := filepath.Join(root, alg, "req")
-		fmt.Println(reqDir)
 		reqFiles, err := ioutil.ReadDir(reqDir)
 		if err != nil {
 			log.Fatal(err)

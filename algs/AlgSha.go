@@ -1,6 +1,6 @@
 package algs
 
-type Sha2 struct {
+type Sha struct {
 	MsgLen		string
 	Msg			[]byte
 	Digest		[]byte

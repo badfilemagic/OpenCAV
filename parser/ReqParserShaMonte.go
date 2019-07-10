@@ -71,12 +71,16 @@ func (r *ReqParserShaMonte) Ingest(lines []string) (int, error) {
 		} else if match, err := regexp.Match(`^\[L = \d+\]$`, []byte(lines[i])); err == nil && match {
 			if match, err := regexp.Match(`32`, []byte(lines[i])); err == nil && match {
 				r.SetOplen(32)
+				r.SetAlg("SHA256")
 			} else if match, err := regexp.Match(`64`, []byte(lines[i])); err == nil && match {
 				r.SetOplen(64)
+				r.SetAlg("SHA512")
 			} else if strings.Contains(lines[i], "256") {
 				r.SetOplen(256)
+				r.SetAlg("SHA3_256")
 			} else if strings.Contains(lines[i], "512") {
 				r.SetOplen(512)
+				r.SetAlg("SHA3_512")
 			} else {
 				log.Fatal(errors.New("Unknown Digest Length!" + lines[i]))
 			}
