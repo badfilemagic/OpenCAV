@@ -13,6 +13,7 @@ import (
 var ImplementedAlgs = []string{
 	"SHA",
 	"SHA3",
+	"HMAC",
 }
 
 func TestSha2(data []byte, alg string) []byte {
@@ -110,6 +111,5 @@ func TestHmac(key []byte, msg []byte, alg string, len int) []byte {
 		hm.Write(msg)
 		hmd = hm.Sum(nil)
 	}
-
 	return hmd
 }
