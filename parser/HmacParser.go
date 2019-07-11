@@ -3,6 +3,9 @@ package parser
 import (
 	"OpenCAV/algs"
 	"encoding/hex"
+	"fmt"
+	"log"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -60,8 +63,11 @@ func (h *HmacParser) Ingest(lines []string) (int, error) {
 			if strings.Contains(lines[i], "SHA_3") {
 				h.SetShaAlg("SHA_3")
 			}
-		} else if lines[i] == "" && !strings.Contains(lines[i], "[")  {
-			hm := new(algs.Hmac)
+			h.respheader = append(h.respheader, "")
+			h.respheader = append(h.respheader, lines[i])
+
+		} else if lines[i] == "" && strings.Contains(lines[i+1], "Count")  {
+			hm := algs.Hmac{}
 			klen, _ := strconv.Atoi(strings.Split(lines[i+2], " = ")[1])
 			hm.Klen = klen
 			tlen, _ := strconv.Atoi(strings.Split(lines[i+3], " = ")[1])
@@ -71,7 +77,7 @@ func (h *HmacParser) Ingest(lines []string) (int, error) {
 			msg, _ := hex.DecodeString(strings.Split(lines[i+5], " = ")[1])
 			hm.Msg = msg
 			h.operations = append(h.operations, hm)
-			i += 5
+			i += 4
 		}
 	}
 	return len(h.operations), nil
@@ -85,5 +91,47 @@ func (h *HmacParser) RunTest(doHmac algs.DoHmac) {
 
 
 func (h *HmacParser) WriteResponse(outfile string) {
-	
+	out, err := os.Create(outfile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer out.Close()
+	for _, i := range h.respheader {
+		if _, err = out.Write([]byte(i + "\r\n")); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if _,err := out.Write([]byte("\r\n")); err != nil {
+		log.Fatal(err)
+	}
+	for i, op := range h.operations {
+		count := fmt.Sprintf("Count = %d\r\n", i)
+		Klen := fmt.Sprintf("Klen = %d\r\n", op.Klen)
+		Tlen := fmt.Sprintf("Tlen = %d\r\n", op.Tlen)
+		Key := fmt.Sprintf("Key = %s\r\n", hex.EncodeToString(op.Key))
+		Msg := fmt.Sprintf("Msg = %s\r\n", hex.EncodeToString(op.Msg))
+		Mac := fmt.Sprintf("Mac = %s\r\n", hex.EncodeToString(op.Mac))
+
+		if _, err = out.Write([]byte(count)); err != nil {
+			log.Fatal(err)
+		}
+		if _, err = out.Write([]byte(Klen)); err != nil {
+			log.Fatal(err)
+		}
+		if _, err = out.Write([]byte(Tlen)); err != nil {
+			log.Fatal(err)
+		}
+		if _, err = out.Write([]byte(Key)); err != nil {
+			log.Fatal(err)
+		}
+		if _, err = out.Write([]byte(Msg)); err != nil {
+			log.Fatal(err)
+		}
+		if _, err := out.Write([]byte(Mac)); err != nil {
+			log.Fatal(err)
+		}
+		if _, err := out.Write([]byte("\r\n")); err != nil {
+			log.Fatal(err)
+		}
+	}
 }

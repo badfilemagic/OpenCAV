@@ -35,6 +35,8 @@ func main() {
 			TestRunners.DoSha3Testing(root, vectorfiles)
 		} else if strings.Contains(alg, "SHA") {
 			TestRunners.DoShaTesting(root, vectorfiles)
+		} else if strings.Contains(alg, "HMAC") {
+			TestRunners.DoHmacTesting(root, vectorfiles)
 		}
 	}
 }
