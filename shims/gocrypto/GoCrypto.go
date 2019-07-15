@@ -96,9 +96,28 @@ func TestSha2Monte(seed []byte, alg string) [][]byte {
 }
 
 func TestSha3Monte(seed []byte, alg string) [][]byte {
-	return nil
+	var checkpoints [][]byte
+	var Mx []byte
+	MD0 := seed
+	for j := 0; j < 100; j++ {
+		for i := 0; i < 1000; i++ {
+			Mx = MD0
+			if alg == "SHA3_256" {
+				h := sha3.New256()
+				h.Write(Mx)
+				MD0 = h.Sum(nil)
+			} else if alg == "SHA3_512" {
+				h := sha3.New512()
+				h.Write(Mx)
+				MD0 = h.Sum(nil)
+			} else {
+				log.Fatal(errors.New("Unknown algorithm"))
+			}
+		}
+		checkpoints = append(checkpoints, MD0)
+	}
+	return checkpoints
 }
-
 
 func TestHmac(key []byte, msg []byte, alg string, len int) []byte {
 	var hmd []byte
